@@ -1,0 +1,72 @@
+﻿@page "/dialogcard/{OrderID}"
+
+@inject Radzen.DialogService dialogService
+@inject NavigationManager Navigation
+
+<RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+    <RadzenRow>
+        <RadzenColumn Size="12" SizeMD="4" SizeXL="3">
+            <RadzenCard Variant="Variant.Outlined" Style="height: 100%;" class="app-card-clickable" @onclick="NavigateToFunctionList">
+                <RadzenStack JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenText TextStyle="TextStyle.Subtitle1">Function List</RadzenText>
+                        <RadzenIcon Style="font-size: 40px" IconColor="#496341" Icon="list_alt" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4" SizeXL="3">
+            <RadzenCard Variant="Variant.Outlined" Style="height: 100%;" class="app-card-clickable" @onclick="NavigateToClearanceUpsert">
+                <RadzenStack JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenText TextStyle="TextStyle.Subtitle1">New EC Clearance</RadzenText>
+                        <RadzenIcon Style="font-size: 40px" IconColor="#496341" Icon="list_alt_add" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4" SizeXL="3">
+            <RadzenCard Variant="Variant.Outlined" Style="height: 100%;" class="app-card-clickable">
+                <RadzenStack JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenText TextStyle="TextStyle.Subtitle1">EC Clear Pending Approval</RadzenText>
+                        <RadzenIcon Style="font-size: 40px" IconColor="#496341" Icon="patient_list" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="4" SizeXL="3">
+            <RadzenCard Variant="Variant.Outlined" Style="height: 100%;" class="app-card-clickable">
+                <RadzenStack JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenText TextStyle="TextStyle.Subtitle1">EC Clear HR</RadzenText>
+                        <RadzenIcon Style="font-size: 40px" IconColor="#496341" Icon="diversity_4" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+@code {
+    [Parameter] public int OrderID { get; set; }
+    [Parameter] public string AppCode { get; set; }      // changed to string
+    [Parameter] public string Description { get; set; }  // changed to string
+    [Parameter] public bool ShowClose { get; set; } = true;
+
+    private void NavigateToClearanceUpsert()
+    {
+        // If this component is inside a Radzen Dialog, close it first to avoid leaving overlay.
+        dialogService.Close();
+
+        Navigation.NavigateTo("/clearanceupsert"); // e.g. if ClearanceUpsert.razor has @page "/clearanceupsert"
+    }
+
+    private void NavigateToFunctionList()
+    {
+        // If this component is inside a Radzen Dialog, close it first to avoid leaving overlay.
+        dialogService.Close();
+
+        Navigation.NavigateTo("/function"); 
+    }
+}

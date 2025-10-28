@@ -1,23 +1,107 @@
 ﻿@inherits LayoutComponentBase
+@inject IFormFactor FormFactor
+@inject DialogService DialogService
+@inject NavigationManager Nav
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<RadzenComponents />
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<RadzenTheme Theme="standard" />
 
-        <article class="content px-4">
+<RadzenLayout>
+    @if (FormFactor.IsWeb() || FormFactor.IsDesktop())
+    {
+        <RadzenHeader>
+            <RadzenMenu class="d-flex w-auto d-flex justify-content-center" style="background-color: #eeeeee">
+                <RadzenMenuItem class="mx-4 item-hover" Text="User Guides" Icon="menu_book" Path="https://apps.anflocor.com/FAQUserGuides.aspx" Target="_blank" />
+                <RadzenMenuItem class="mx-4 item-hover" Text="HelpDesk" Icon="help_center" Path="https://helpdesk.anflocor.com/" Target="_blank" />
+                <RadzenMenuItem class="mx-4 item-hover" Text="Feedback Survey" Icon="rate_review" Path="https://forms.office.com/pages/responsepage.aspx?id=WMSxlctBm0icj7HVdkxg_W5qDcKLxDJCtyAP0SmfY_tUMFdCUURVRzI2SEYyMEdGU1BUQ1ZSWVlDNC4u&route=shorturl" Target="_blank" />
+            </RadzenMenu>
+
+            <RadzenMenu Responsive="false" class="d-flex align-items-center w-100 rz-shadow-1">
+                <RadzenMenuItem class="align-items-center me-auto ms-3" Image="_content/BZ_WebMobileTemplate.Shared/images/anfloverse.png" Path="home" />
+
+                <RadzenMenuItem class="d-flex align-items-center ms-auto">
+                    <Template>
+                        <RadzenText class="mb-0 me-2" Style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color:#496341;" Text="Good Morning, El Jan Nerie!" />
+                        <RadzenProfileMenu class="d-inline-flex align-items-center">
+                            <Template>
+                                <RadzenGravatar Style="border-radius:50%;" />
+                            </Template>
+                            <ChildContent>
+                                <RadzenProfileMenuItem Text="Logout" Path="logout" Icon="logout" />
+                            </ChildContent>
+                        </RadzenProfileMenu>
+                    </Template>
+                </RadzenMenuItem>
+            </RadzenMenu>
+        </RadzenHeader>
+    }
+    else if (FormFactor.IsMobile())
+    {
+        <RadzenHeader>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+                <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+                <RadzenImage Click="@(() => Nav.NavigateTo("/home"))" Style="width:150px" Path="_content/BZ_WebMobileTemplate.Shared/images/anfloverse.png" />
+            </RadzenStack>
+        </RadzenHeader>
+        <RadzenSidebar FullHeight="true"
+                       Responsive="false"
+                       @bind-Expanded="@sidebarExpanded"
+                       class="mobile-sidebar"
+                       Style="position: absolute; z-index: 3; background-color: #496341; height: 100vh">
+            <RadzenStack Orientation="Orientation.Horizontal"
+                         AlignItems="AlignItems.Center"
+                         Gap="0.5rem"
+                         class="rz-p-2 d-inline-flex">
+                <RadzenText Text="ANFLOVERSE" class="text-white fw-bold fs-3" />
+                <RadzenButton class="ms-auto"
+                              Icon="west"
+                              IconColor="white"
+                              Variant="Variant.Text"
+                              ButtonStyle="ButtonStyle.Secondary"
+                              Click="@(() => sidebarExpanded = false)" />
+            </RadzenStack>
+
+            <RadzenPanelMenu Style="background-color: #496341" class="mt-3 sidebar-body">
+                <RadzenPanelMenuItem class="mx-4" Text="User Guides" Icon="menu_book" Path="https://apps.anflocor.com/FAQUserGuides.aspx" Target="_blank" />
+                <RadzenPanelMenuItem class="mx-4" Text="HelpDesk" Icon="help_center" Path="https://helpdesk.anflocor.com/" Target="_blank" />
+                <RadzenPanelMenuItem class="mx-4" Text="Feedback Survey" Icon="rate_review" Path="https://forms.office.com/pages/responsepage.aspx?id=WMSxlctBm0icj7HVdkxg_W5qDcKLxDJCtyAP0SmfY_tUMFdCUURVRzI2SEYyMEdGU1BUQ1ZSWVlDNC4u&route=shorturl" Target="_blank" />
+                <RadzenPanelMenuItem class="my-5 mx-4" Text="Logout" Icon="logout" Path="logout" />
+            </RadzenPanelMenu>
+
+            <RadzenText class="copyright">&copy; @year ANFLO Group of Companies</RadzenText>
+        </RadzenSidebar>
+    }
+
+    <RadzenBody class="scontainer">
+        <div class="rz-p-1">
             @Body
-        </article>
-    </main>
-</div>
-
+        </div>
+    </RadzenBody>
+    @if (FormFactor.IsWeb() || FormFactor.IsDesktop())
+    {
+        <RadzenFooter>
+            <RadzenFab Icon="campaign" IconColor="#f06292" Style="background-color: #eeeeee; color: #696868; position: fixed;" Text="Announcements" ButtonStyle="ButtonStyle.Base" Click=@OpenSideDialog />
+            &copy; @year <b>ANFLO Group of Companies</b>
+        </RadzenFooter>
+    }
+</RadzenLayout>
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+
+@code {
+    DialogPosition position = DialogPosition.Right;
+
+    bool sidebarExpanded = false;
+
+    string year = DateTime.Now.ToString("yyyy");
+
+    async Task OpenSideDialog()
+    {
+        await DialogService.OpenSideAsync<DialogSideContent>($"{DateTime.Now.ToString("D")}", options: new SideDialogOptions { CloseDialogOnOverlayClick = true, Position = position, ShowMask = true });
+    }
+}

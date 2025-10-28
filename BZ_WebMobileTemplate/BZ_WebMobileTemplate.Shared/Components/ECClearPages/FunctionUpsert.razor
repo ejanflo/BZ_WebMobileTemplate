@@ -1,0 +1,174 @@
+@page "/function/create"
+@page "/function/update/{id:int}"
+
+@inject IFormFactor FormFactor
+@inject IFunctionRepository _functionRepository
+@inject NavigationManager Nav
+@inject NotificationService NotificationService
+
+<PageTitle>ANFLOVERSE | Function Management</PageTitle>
+
+<style>
+    .action-bar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--rz-base-50);
+        padding: 0.75rem 0.75rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,.15);
+        border-radius: 6px 6px 6px 6px;
+    }
+
+    /* If you prefer fully fixed (always at top of viewport, spanning width), replace class with action-bar-fixed */
+    .action-bar-fixed {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 110;
+    }
+
+    /* Optional: add top padding to form content when using fixed bar to avoid overlap */
+    .has-fixed-bar {
+        padding-top: 5.5rem;
+    }
+</style>
+
+@if (IsProcessing)
+{
+    <div class="mb-3" style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background-color: white; padding: 0;">
+        <RadzenProgressBar Style="height: 5px;" ProgressBarStyle="ProgressBarStyle.Secondary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    </div>
+}
+
+<RadzenTemplateForm Data="@Function" Submit="@((UPRO_S_Function f) => SaveFunctionAsync(f))">
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 JustifyContent="@(FormFactor.IsMobile() ? JustifyContent.Center : JustifyContent.End)"
+                 Gap="1rem"
+                 class="action-bar m-0">
+        <RadzenButton Style="@($"background-color: {(Id == 0 ? "#496341" : "#2196f3")}")"
+                      ButtonType="ButtonType.Submit"
+                      Size="ButtonSize.Small"
+                      Icon="save"
+                      Text="@(Id == 0 ? "Create" : "Update")"
+                      Disabled="@IsProcessing" />
+        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                      Variant="Variant.Flat"
+                      Size="ButtonSize.Small"
+                      Icon="cancel"
+                      Text="Cancel"
+                      Click="@(() => Nav.NavigateTo("/function"))"
+                      Disabled="@IsProcessing" />
+    </RadzenStack>
+    
+    <RadzenRow Gap="2rem" class="rz-p-0 rz-p-lg-4">
+        <RadzenColumn Size="12">
+            <RadzenStack>
+                <RadzenCard>
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H5" TextAlign="TextAlign.Center" class="mb-3">
+                            @(Id == 0 ? "Create New Function" : "Update Function")
+                        </RadzenText>
+
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="2">
+                                <RadzenLabel Text="Function Name" Component="FunctionName" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="10">
+                                <RadzenTextBox @bind-Value="Function.FunctionName"
+                                               Name="FunctionName"
+                                               Style="width: 100%;"
+                                               MaxLength="255"
+                                               Placeholder="Enter function name" />
+                                <RadzenRequiredValidator Component="FunctionName" Text="Function name is required!" />
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="2">
+                                <RadzenLabel Text="Description" Component="Description" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="10">
+                                <RadzenTextArea @bind-Value="Function.Description"
+                                                Name="Description"
+                                                Style="width: 100%;"
+                                                Rows="3"
+                                                MaxLength="255"
+                                                Placeholder="Enter function description" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    
+    private UPRO_S_Function Function { get; set; } = new();
+    private bool IsProcessing { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != 0)
+        {
+            IsProcessing = true;
+            try
+            {
+                Function = await _functionRepository.GetByIdAsync(Id) ?? new UPRO_S_Function();
+            }
+            finally
+            {
+                IsProcessing = false;
+            }
+        }
+    }
+
+    private async Task SaveFunctionAsync(UPRO_S_Function f)
+    {
+        try
+        {
+            IsProcessing = true;
+            Function = f;
+
+            if (Id == 0)
+            {
+                await _functionRepository.CreateAsync(Function);
+                NotificationService.Notify(new NotificationMessage 
+                { 
+                    Severity = NotificationSeverity.Success, 
+                    Summary = "Success", 
+                    Detail = "Function created successfully!" 
+                });
+            }
+            else
+            {
+                Function.FunctionId = Id;
+                await _functionRepository.UpdateAsync(Function);
+                NotificationService.Notify(new NotificationMessage 
+                { 
+                    Severity = NotificationSeverity.Success, 
+                    Summary = "Success", 
+                    Detail = "Function updated successfully!" 
+                });
+            }
+
+            Nav.NavigateTo("/function");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage 
+            { 
+                Severity = NotificationSeverity.Error, 
+                Summary = "Error", 
+                Detail = $"An error occurred: {ex.Message}" 
+            });
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+}

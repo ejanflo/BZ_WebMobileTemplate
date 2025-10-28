@@ -1,0 +1,373 @@
+﻿@page "/"
+@page "/home"
+
+@using System.Globalization
+@using Microsoft.JSInterop
+@using System.Text.Json
+
+@inject DialogService DialogService
+@inject IJSRuntime JSRuntime
+@inject IFormFactor FormFactor
+
+<PageTitle>ANFLOVERSE | Home</PageTitle>
+
+<style>
+    .rz-panel-titlebar {
+        flex-direction: row-reverse;
+        justify-content: left;
+    }
+
+    .app-card-clickable {
+        cursor: pointer;
+        transition: box-shadow .2s ease, transform .2s ease;
+    }
+
+        .app-card-clickable:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,.15);
+            transform: translateY(-2px);
+        }
+</style>
+<RadzenStack class="rz-p-0 rz-p-md-5 rz-p-lg-5">
+    <RadzenCard>
+        <RadzenPanel AllowCollapse="true" Collapsed="true" ExpandTitle="Expand report" CollapseTitle="Collapse report">
+            <HeaderTemplate>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                    <RadzenIcon Icon="analytics" /><b>ANFLOVERSE REPORTS</b>
+                </RadzenStack>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenRow Style="--rz-text-h2-line-height: 1; --rz-text-h2-font-weight: 200;" class="pt-2">
+                    <RadzenColumn Size="12" SizeMD="12" SizeXL="2">
+                        <RadzenRow>
+                            <RadzenColumn Size="12" SizeMD="4" SizeXL="12">
+                                <RadzenCard Variant="Variant.Outlined" Style="height: 100%;">
+                                    <RadzenStack JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                                            <RadzenText TextStyle="TextStyle.H6">Progress</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.H2" class="rz-color-info rz-m-0 fw-bold">@($"20%")</RadzenText>
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4" SizeXL="12">
+                                <RadzenCard Variant="Variant.Outlined" Style="height: 100%;">
+                                    <RadzenStack Gap="0">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                                            <RadzenText TextStyle="TextStyle.H6">Open Issues</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.H2" class="rz-color-success rz-m-0 fw-bold">13</RadzenText>
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4" SizeXL="12">
+                                <RadzenCard Variant="Variant.Outlined" Style="height: 100%;">
+                                    <RadzenStack Gap="0">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                                            <RadzenText TextStyle="TextStyle.H6">Pending Approvals</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.H2" class="rz-color-danger rz-m-0 fw-bold">129</RadzenText>
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow>
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                        <RadzenChart Style="height: 30vh" ColorScheme="@colorScheme">
+                            @for (var year = 2017; year <= 2024; year++)
+                            {
+                                var currentYearRevenue = revenue.Where(r => r.Year == year).ToList();
+                                <RadzenColumnSeries Data="@currentYearRevenue" CategoryProperty="Quarter" Title="@year.ToString()" ValueProperty="Revenue" />
+                            }
+                            <RadzenColumnOptions Margin="0" />
+                            <RadzenValueAxis Formatter="@FormatAsUSD" />
+                        </RadzenChart>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1" TagName="TagName.H3">Total Approvals</RadzenText>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                        <RadzenChart Style="height: 30vh" ColorScheme="@colorScheme">
+                            <RadzenPieSeries Data="@revenue.Where(r => r.Year == 2020)" Title="Revenue" CategoryProperty="Quarter" ValueProperty="Revenue" />
+                            <RadzenLegend Position="LegendPosition.Bottom" />
+                        </RadzenChart>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1" TagName="TagName.H3">Total Approvals</RadzenText>
+                    </RadzenColumn>
+
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                        <RadzenChart Style="height: 30vh">
+                            <RadzenAreaSeries Stroke="rgb(236,72,127)" StrokeWidth="2" Fill="rgba(236,72,127,.5)" Data="@revenue.Where(r => r.Year == 2020)" CategoryProperty="Quarter" ValueProperty="Revenue">
+                                <ChildContent>
+                                    <RadzenMarkers MarkerType="MarkerType.Circle" Fill="#fff" Stroke="rgba(236,72,127)" StrokeWidth="2" Size="8" />
+                                </ChildContent>
+                                <TooltipTemplate Context="data">
+                                    Revenue for <span>@data.Quarter</span> 2020: <strong>@data.Revenue.ToString("C0", CultureInfo.CreateSpecificCulture("en-US"))</strong>
+                                </TooltipTemplate>
+                            </RadzenAreaSeries>
+                            <RadzenCategoryAxis>
+                                <RadzenGridLines Visible="true" Stroke="#ccc" LineType="LineType.Dashed" />
+                            </RadzenCategoryAxis>
+                            <RadzenValueAxis>
+                                <RadzenGridLines Visible="true" />
+                            </RadzenValueAxis>
+                            <RadzenChartTooltipOptions Style="border: 1px solid rgb(236,72,127); background: #eee; color: #000;" />
+                            <RadzenLegend Visible="false" />
+                        </RadzenChart>
+                        <RadzenText TextAlign="TextAlign.Center" TextStyle="TextStyle.Subtitle1" TagName="TagName.H3">Total Approvals</RadzenText>
+                    </RadzenColumn>
+                </RadzenRow>
+            </ChildContent>
+        </RadzenPanel>
+    </RadzenCard>
+
+    <RadzenCard>
+        <RadzenPanel AllowCollapse="true">
+            <HeaderTemplate>
+                <RadzenText TextStyle="TextStyle.H6" class="rz-display-flex rz-align-items-center rz-m-0">
+                    <RadzenIcon Icon="apps" class="rz-me-1" /><b style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color:#496341;">My Apps</b>
+                </RadzenText>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenRow>
+                    <RadzenColumn Size="12" SizeSM="6" SizeMD="4" SizeLG="2">
+                        <RadzenCard Variant="Variant.Outlined" class="rz-mt-2 rz-border-radius-3 app-card-clickable" @onclick="@(() => OpenCard("EC Clear", "Employee Clearance Certificate"))">
+                            <RadzenRow Gap="0.5rem">
+                                <RadzenColumn Size="8" class="rz-text-truncate">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="ANFLOVERSE" class="rz-me-1" IsPill="true" />
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0"></RadzenText>
+                                </RadzenColumn>
+
+                            </RadzenRow>
+                            <hr style="border: none; background-color: rgba(0,0,0,.2); height: 2px; margin: 1rem 0;" />
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                <RadzenStack Gap="0">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>ANFLOVERSE</strong></RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">ANFLOVERSE PORTAL</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeMD="4" SizeLG="2">
+                        <RadzenCard Variant="Variant.Outlined" class="rz-mt-2 rz-border-radius-3 app-card-clickable" @onclick="@(() => OpenCard("EC Clear", "Employee Clearance Certificate"))">
+                            <RadzenRow Gap="0.5rem">
+                                <RadzenColumn Size="8" class="rz-text-truncate">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="CAR" class="rz-me-1" IsPill="true" />
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0"></RadzenText>
+                                </RadzenColumn>
+                                <RadzenColumn Size="4" class="rz-text-align-end">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Shade="Shade.Lighter" Text=5 IsPill="true" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <hr style="border: none; background-color: rgba(0,0,0,.2); height: 2px; margin: 1rem 0;" />
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                <RadzenStack Gap="0">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>CAR</strong></RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Capital Appropriation Request</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeMD="4" SizeLG="2">
+                        <RadzenCard Variant="Variant.Outlined" class="rz-mt-2 rz-border-radius-3 app-card-clickable" @onclick="@(() => OpenCard("EC Clear", "Employee Clearance Certificate"))">
+                            <RadzenRow Gap="0.5rem">
+                                <RadzenColumn Size="8" class="rz-text-truncate">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="RS" class="rz-me-1" IsPill="true" />
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0"></RadzenText>
+                                </RadzenColumn>
+                                <RadzenColumn Size="4" class="rz-text-align-end">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Shade="Shade.Lighter" Text=2 IsPill="true" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <hr style="border: none; background-color: rgba(0,0,0,.2); height: 2px; margin: 1rem 0;" />
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                <RadzenStack Gap="0">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>RS</strong></RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Requisition Slip</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeMD="4" SizeLG="2">
+                        <RadzenCard Variant="Variant.Outlined" class="rz-mt-2 rz-border-radius-3 app-card-clickable" @onclick="@(() => OpenCard("EC Clear", "Employee Clearance Certificate"))">
+                            <RadzenRow Gap="0.5rem">
+                                <RadzenColumn Size="8" class="rz-text-truncate">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="ACCEDE" class="rz-me-1" IsPill="true" />
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0"></RadzenText>
+                                </RadzenColumn>
+                                <RadzenColumn Size="4" class="rz-text-align-end">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Shade="Shade.Lighter" Text=5 IsPill="true" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <hr style="border: none; background-color: rgba(0,0,0,.2); height: 2px; margin: 1rem 0;" />
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                <RadzenStack Gap="0">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>ACCEDE</strong></RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Expense Management System</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeMD="4" SizeLG="2">
+                        <RadzenCard Variant="Variant.Outlined" class="rz-mt-2 rz-border-radius-3 app-card-clickable" @onclick="@(() => OpenCard("EC Clear", "Employee Clearance Certificate"))">
+                            <RadzenRow Gap="0.5rem">
+                                <RadzenColumn Size="8" class="rz-text-truncate">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="EC Clear" class="rz-me-1" IsPill="true" />
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0"></RadzenText>
+                                </RadzenColumn>
+                                <RadzenColumn Size="4" class="rz-text-align-end">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Shade="Shade.Lighter" Text=5 IsPill="true" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <hr style="border: none; background-color: rgba(0,0,0,.2); height: 2px; margin: 1rem 0;" />
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                <RadzenStack Gap="0">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>EC Clear</strong></RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Employee Clearance Certificate</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+                </RadzenRow>
+            </ChildContent>
+        </RadzenPanel>
+    </RadzenCard>
+</RadzenStack>
+
+
+@code {
+    ColorScheme colorScheme = ColorScheme.Palette;
+
+    class DataItem
+    {
+        public int Year { get; set; }
+        public string Quarter { get; set; }
+        public double Revenue { get; set; }
+    }
+
+    string FormatAsUSD(object value)
+    {
+        return ((double)value).ToString("C0", CultureInfo.CreateSpecificCulture("en-US"));
+    }
+
+    IList<DataItem> revenue = new List<DataItem>();
+
+    protected override void OnInitialized()
+    {
+        var random = new Random();
+
+        for (var year = 2017; year <= 2024; year++)
+        {
+            for (var quarter = 1; quarter <= 4; quarter++)
+            {
+                revenue.Add(new DataItem
+                {
+                    Year = year,
+                    Quarter = $"Q{quarter}",
+                    Revenue = random.NextDouble() * 200000
+                });
+            }
+        }
+    }
+
+    int orderID = 10248;
+
+    public async Task OpenCard(string appCode, string appDescription)
+    {
+        await LoadStateAsync();
+
+        // Example: pass dynamic values into the dialog
+        await DialogService.OpenAsync<DialogCardPage>($"{appCode} - {appDescription}",
+            new Dictionary<string, object>
+            {
+                { "AppCode", appCode },
+                { "Description", appDescription },
+                { "OrderID", orderID } // keep existing if still needed
+            },
+            new DialogOptions
+            {
+                Resizable = true,
+                Draggable = true,
+                Resize = OnResize,
+                Drag = OnDrag,
+                Width = Settings?.Width ?? "700px",
+                Height = FormFactor.IsMobile() ? "100%" : "",
+                Left = Settings?.Left,
+                Top = Settings?.Top
+            });
+
+        await SaveStateAsync();
+    }
+
+    void OnDrag(System.Drawing.Point point)
+    {
+        JSRuntime.InvokeVoidAsync("eval", $"console.log('Dialog drag. Left:{point.X}, Top:{point.Y}')");
+
+        if (Settings == null)
+        {
+            Settings = new DialogSettings();
+        }
+
+        Settings.Left = $"{point.X}px";
+        Settings.Top = $"{point.Y}px";
+
+        InvokeAsync(SaveStateAsync);
+    }
+
+    void OnResize(System.Drawing.Size size)
+    {
+        JSRuntime.InvokeVoidAsync("eval", $"console.log('Dialog resize. Width:{size.Width}, Height:{size.Height}')");
+
+        if (Settings == null)
+        {
+            Settings = new DialogSettings();
+        }
+
+        Settings.Width = $"{size.Width}px";
+        // Settings.Height = $"{size.Height}px";
+
+        InvokeAsync(SaveStateAsync);
+    }
+
+    DialogSettings _settings;
+    public DialogSettings Settings
+    {
+        get
+        {
+            return _settings;
+        }
+        set
+        {
+            if (_settings != value)
+            {
+                _settings = value;
+                InvokeAsync(SaveStateAsync);
+            }
+        }
+    }
+
+    private async Task LoadStateAsync()
+    {
+        await Task.CompletedTask;
+
+        var result = await JSRuntime.InvokeAsync<string>("window.localStorage.getItem", "DialogSettings");
+        if (!string.IsNullOrEmpty(result))
+        {
+            _settings = JsonSerializer.Deserialize<DialogSettings>(result);
+        }
+    }
+
+    private async Task SaveStateAsync()
+    {
+        await Task.CompletedTask;
+
+        await JSRuntime.InvokeVoidAsync("window.localStorage.setItem", "DialogSettings", JsonSerializer.Serialize<DialogSettings>(Settings));
+    }
+
+    public class DialogSettings
+    {
+        public string Left { get; set; }
+        public string Top { get; set; }
+        public string Width { get; set; }
+        public string Height { get; set; }
+    }
+}

@@ -1,0 +1,356 @@
+@page "/function"
+
+@inject IFunctionRepository _functionRepository
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject IFormFactor FormFactor
+
+<PageTitle>ANFLOVERSE | Functions</PageTitle>
+
+<style>
+    .search-box {
+        min-width: 300px;
+        max-width: 400px;
+    }
+
+    @@media (max-width: 768px) {
+        .search-box {
+            min-width: 100%;
+            max-width: 100%;
+        }
+    }
+</style>
+
+@if (IsProcessing)
+{
+    <div class="mb-3" style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background-color: white; padding: 0;">
+        <RadzenProgressBar Style="height: 5px;" ProgressBarStyle="ProgressBarStyle.Secondary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    </div>
+}
+
+<!-- Data Grid with Integrated Header -->
+<RadzenCard>
+    <RadzenStack>
+        <!-- Integrated Header Row -->
+        <RadzenStack Orientation="@(FormFactor.IsMobile() ? Orientation.Vertical : Orientation.Horizontal)" 
+                     AlignItems="@(FormFactor.IsMobile() ? AlignItems.Stretch : AlignItems.Center)" 
+                     JustifyContent="JustifyContent.SpaceBetween"
+                     Gap="1.5rem"
+                     Style="margin-bottom: 1rem;">
+            
+            <!-- Left Side: Title and Selected Count -->
+            <RadzenStack Orientation="Orientation.Horizontal" 
+                         AlignItems="AlignItems.Center" 
+                         Gap="1rem"
+                         Wrap="FlexWrap.Wrap">
+                <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; color: #2c3e50; font-weight: 600;">
+                    Functions
+                </RadzenText>
+                @if (_selectedItems?.Any() == true)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@($"{_selectedItems.Count} selected")" />
+                }
+            </RadzenStack>
+
+            <!-- Right Side: Search and Action Buttons -->
+            <RadzenStack Orientation="@(FormFactor.IsMobile() ? Orientation.Vertical : Orientation.Horizontal)" 
+                         AlignItems="@(FormFactor.IsMobile() ? AlignItems.Stretch : AlignItems.Center)"
+                         Gap="0.75rem">
+                
+                <!-- Search Box -->
+                <RadzenTextBox @bind-Value="_searchString" 
+                              Placeholder="Search functions..." 
+                              class="search-box"
+                              Style="height: 40px;" />
+                
+                <!-- Action Buttons -->
+                <RadzenStack Orientation="Orientation.Horizontal" 
+                             Gap="0.75rem"
+                             AlignItems="AlignItems.Center">
+                    
+                    <RadzenButton Style="background-color: #496341; height: 40px;" 
+                                  Size="ButtonSize.Medium"
+                                  Icon="add" 
+                                  Text="Add Function" 
+                                  Click="@(() => Nav.NavigateTo("function/create"))" />
+                    
+                    @if (_selectedItems?.Any() == true)
+                    {
+                        <RadzenButton Style="background-color: #2196f3; height: 40px;" 
+                                      Size="ButtonSize.Medium"
+                                      Icon="file_download" 
+                                      Text="Export Selected"
+                                      Click="@ExportSelectedAsync" />
+                    }
+                    
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                  Variant="Variant.Outlined"
+                                  Size="ButtonSize.Medium"
+                                  Icon="file_download" 
+                                  Text="Export All"
+                                  Style="height: 40px;"
+                                  Click="@ExportAllAsync" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenStack>
+
+        <!-- Data Grid with Green Theme -->
+        <RadzenDataGrid @ref="functionsGrid" Data="@FilteredFunctions" TItem="UPRO_S_Function" 
+                        AllowFiltering="true" AllowPaging="true" PagerAlwaysVisible PagerHorizontalAlign="HorizontalAlign.Center" PagerPosition="PagerPosition.Bottom" PageSize="10" 
+                        AllowSorting="true" AllowColumnResize="true" Density="Density.Compact"
+                        SelectionMode="DataGridSelectionMode.Multiple" @bind-Value="@_selectedItems"
+                        class="green-theme-grid">
+            <Columns>
+                <RadzenDataGridColumn Width="60px" Sortable="false" Filterable="false">
+                    <HeaderTemplate>
+                        <RadzenCheckBox TabIndex="-1" TriState="false" TValue="bool?" InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "Select all items" } })"
+                                        Value="@(GetSelectAllState())"
+                                        Change="@(args => HandleSelectAllChange(args))" />
+                    </HeaderTemplate>
+                    <Template Context="data">
+                        <RadzenCheckBox TabIndex="-1" TriState="false" Value="@(_selectedItems != null && _selectedItems.Contains(data))" InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "Select item" } })"
+                                        TValue="bool" Change=@(args => HandleItemSelectionChange(data, args)) />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UPRO_S_Function" Property="FunctionId" Title="Function ID" Width="120px" />
+                <RadzenDataGridColumn TItem="UPRO_S_Function" Property="FunctionName" Title="Name" />
+                <RadzenDataGridColumn TItem="UPRO_S_Function" Property="Description" Title="Description" />
+                <RadzenDataGridColumn TItem="UPRO_S_Function" Title="Actions" Sortable="false" Filterable="false" Width="200px">
+                    <Template Context="function">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Style="color: #2196f3; background-color: transparent;"
+                                          Size="ButtonSize.Small"
+                                          Icon="edit" 
+                                          Text="Edit"
+                                          Click="@(() => Nav.NavigateTo($"function/update/{function.FunctionId}"))" />
+                            <RadzenButton Style="color: #f44336; background-color: transparent;"
+                                          Size="ButtonSize.Small"
+                                          Icon="delete" 
+                                          Text="Delete"
+                                          Click="@(() => HandleDeleteAsync(function.FunctionId))" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    private RadzenDataGrid<UPRO_S_Function> functionsGrid;
+    private bool IsProcessing { get; set; } = true;
+    private IEnumerable<UPRO_S_Function> Functions { get; set; } = new List<UPRO_S_Function>();
+    private IList<UPRO_S_Function> _selectedItems = new List<UPRO_S_Function>();
+    private string _searchString = string.Empty;
+
+    private IEnumerable<UPRO_S_Function> FilteredFunctions
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_searchString))
+                return Functions;
+
+            return Functions.Where(x =>
+                (x.FunctionName ?? string.Empty).Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+                (x.Description ?? string.Empty).Contains(_searchString, StringComparison.OrdinalIgnoreCase)
+            );
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFunctionsSafeAsync();
+    }
+
+    private bool? GetSelectAllState()
+    {
+        if (_selectedItems == null || !_selectedItems.Any())
+            return false;
+
+        var filteredList = FilteredFunctions.ToList();
+        if (!filteredList.Any())
+            return false;
+
+        if (filteredList.All(item => _selectedItems.Contains(item)))
+            return true;
+
+        if (filteredList.Any(item => _selectedItems.Contains(item)))
+            return null;
+
+        return false;
+    }
+
+    private async Task HandleSelectAllChange(bool? selectAll)
+    {
+        if (selectAll == true)
+        {
+            // Add filtered items to existing collection instead of replacing it
+            var filteredItems = FilteredFunctions.ToList();
+            foreach (var item in filteredItems)
+            {
+                if (!_selectedItems.Contains(item))
+                {
+                    _selectedItems.Add(item);
+                }
+            }
+        }
+        else
+        {
+            // Remove all filtered items from selection
+            var filteredItems = FilteredFunctions.ToList();
+            foreach (var item in filteredItems.ToList())
+            {
+                _selectedItems.Remove(item);
+            }
+        }
+        
+        // Force UI update and grid refresh
+        await InvokeAsync(StateHasChanged);
+        if (functionsGrid != null)
+        {
+            await functionsGrid.Reload();
+        }
+    }
+
+    private async Task HandleItemSelectionChange(UPRO_S_Function item, bool isSelected)
+    {
+        if (isSelected)
+        {
+            if (!_selectedItems.Contains(item))
+            {
+                _selectedItems.Add(item);
+            }
+        }
+        else
+        {
+            // Ensure the item is completely removed
+            while (_selectedItems.Contains(item))
+            {
+                _selectedItems.Remove(item);
+            }
+        }
+        
+        // Force UI update
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadFunctionsSafeAsync()
+    {
+        try
+        {
+            IsProcessing = true;
+            Functions = await _functionRepository.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage 
+            { 
+                Severity = NotificationSeverity.Error, 
+                Summary = "Error", 
+                Detail = $"Failed to load functions: {ex.Message}" 
+            });
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    private async Task HandleDeleteAsync(int id)
+    {
+        var result = await DialogService.Confirm("Are you sure you want to delete this function?", "Delete Function", 
+            new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (result == true)
+        {
+            try
+            {
+                IsProcessing = true;
+                var deleted = await _functionRepository.DeleteAsync(id);
+                if (deleted)
+                {
+                    NotificationService.Notify(new NotificationMessage 
+                    { 
+                        Severity = NotificationSeverity.Success, 
+                        Summary = "Success", 
+                        Detail = "Function deleted successfully." 
+                    });
+                    await LoadFunctionsSafeAsync();
+                    // Clear selections after reload
+                    _selectedItems.Clear();
+                    await InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage 
+                    { 
+                        Severity = NotificationSeverity.Error, 
+                        Summary = "Error", 
+                        Detail = "Function deletion failed." 
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(new NotificationMessage 
+                { 
+                    Severity = NotificationSeverity.Error, 
+                    Summary = "Error", 
+                    Detail = $"Error deleting function: {ex.Message}" 
+                });
+            }
+            finally
+            {
+                IsProcessing = false;
+            }
+        }
+    }
+
+    private async Task ExportAllAsync() => await ExportToExcelAsync(Functions, "all");
+    
+    private async Task ExportSelectedAsync()
+    {
+        if (!_selectedItems.Any())
+        {
+            NotificationService.Notify(new NotificationMessage 
+            { 
+                Severity = NotificationSeverity.Info, 
+                Summary = "Info", 
+                Detail = "No rows selected." 
+            });
+            return;
+        }
+        await ExportToExcelAsync(_selectedItems, "selected");
+    }
+
+    private async Task ExportToExcelAsync(IEnumerable<UPRO_S_Function> items, string suffix)
+    {
+        try
+        {
+            // Simple CSV export as alternative to Excel (ClosedXML not included)
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Function ID,Name,Description");
+            
+            foreach (var func in items)
+            {
+                csv.AppendLine($"{func.FunctionId},\"{func.FunctionName ?? ""}\",\"{func.Description ?? ""}\"");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            var fileName = $"functions_{suffix}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, Convert.ToBase64String(bytes));
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage 
+            { 
+                Severity = NotificationSeverity.Error, 
+                Summary = "Error", 
+                Detail = $"Export failed: {ex.Message}" 
+            });
+        }
+    }
+}

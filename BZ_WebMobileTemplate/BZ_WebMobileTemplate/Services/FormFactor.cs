@@ -4,14 +4,15 @@ namespace BZ_WebMobileTemplate.Services
 {
     public class FormFactor : IFormFactor
     {
-        public string GetFormFactor()
-        {
-            return DeviceInfo.Idiom.ToString();
-        }
+        public string GetFormFactor() => DeviceInfo.Idiom.ToString();
 
-        public string GetPlatform()
-        {
-            return DeviceInfo.Platform.ToString() + " - " + DeviceInfo.VersionString;
-        }
+        public string GetPlatform() =>
+            $"{DeviceInfo.Platform} - {DeviceInfo.VersionString}";
+
+        public bool IsWeb() => false;
+
+        public bool IsMobile() =>
+            DeviceInfo.Idiom == DeviceIdiom.Phone || DeviceInfo.Idiom == DeviceIdiom.Tablet;
+        public bool IsDesktop() => DeviceInfo.Idiom == DeviceIdiom.Desktop;
     }
 }

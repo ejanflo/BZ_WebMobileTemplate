@@ -1,6 +1,13 @@
-﻿using BZ_WebMobileTemplate.Services;
+﻿using Microsoft.Extensions.Logging;
+using Radzen;
+using BZ_WebMobileTemplate.Services;
 using BZ_WebMobileTemplate.Shared.Services;
-using Microsoft.Extensions.Logging;
+using BZ_WebMobileTemplate.Shared.Data;
+using BZ_WebMobileTemplate.Repositories.IRepository;
+using Microsoft.EntityFrameworkCore;
+using BZ_WebMobileTemplate.Shared.Repositories;
+using Microsoft.Extensions.DependencyInjection; // Add this line
+using Microsoft.Extensions.Http; // Add this line
 
 namespace BZ_WebMobileTemplate
 {
@@ -20,6 +27,17 @@ namespace BZ_WebMobileTemplate
             builder.Services.AddSingleton<IFormFactor, FormFactor>();
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddRadzenComponents();
+
+            // Add HTTP client for API calls
+            builder.Services.AddHttpClient();
+
+            // Use HTTP-based repository instead of direct database access
+            builder.Services.AddScoped<IFunctionRepository, HttpFunctionRepository>();
+
+            // Add Radzen services
+            builder.Services.AddScoped<DialogService>();
+            builder.Services.AddScoped<NotificationService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
