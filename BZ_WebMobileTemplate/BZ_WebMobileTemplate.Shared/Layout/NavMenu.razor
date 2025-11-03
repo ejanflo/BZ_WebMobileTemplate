@@ -1,30 +1,33 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">TemplateApp</a>
-    </div>
-</div>
+﻿<RadzenSidebar FullHeight="true"
+               Responsive="false"
+               @bind-Expanded="@sidebarExpanded"
+               class="mobile-sidebar"
+               Style="position: absolute; z-index: 3; background-color: #496341; height: 100vh">
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 AlignItems="AlignItems.Center"
+                 Gap="0.5rem"
+                 class="rz-p-2 d-inline-flex">
+        <RadzenText Text="ANFLOVERSE" class="text-white fw-bold fs-3" />
+        <RadzenButton class="ms-auto"
+                      Icon="west"
+                      IconColor="white"
+                      Variant="Variant.Text"
+                      ButtonStyle="ButtonStyle.Secondary"
+                      Click="@(() => sidebarExpanded = false)" />
+    </RadzenStack>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    <RadzenPanelMenu Style="background-color: #496341" class="mt-3 sidebar-body">
+        <RadzenPanelMenuItem class="mx-4" Text="User Guides" Icon="menu_book" Path="https://apps.anflocor.com/FAQUserGuides.aspx" Target="_blank" />
+        <RadzenPanelMenuItem class="mx-4" Text="HelpDesk" Icon="help_center" Path="https://helpdesk.anflocor.com/" Target="_blank" />
+        <RadzenPanelMenuItem class="mx-4" Text="Feedback Survey" Icon="rate_review" Path="https://forms.office.com/pages/responsepage.aspx?id=WMSxlctBm0icj7HVdkxg_W5qDcKLxDJCtyAP0SmfY_tUMFdCUURVRzI2SEYyMEdGU1BUQ1ZSWVlDNC4u&route=shorturl" Target="_blank" />
+        <RadzenPanelMenuItem class="my-5 mx-4" Text="Logout" Icon="logout" Path="logout" />
+    </RadzenPanelMenu>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+    <RadzenText class="copyright">&copy; @year ANFLO Group of Companies</RadzenText>
+</RadzenSidebar>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+@code {
+    bool sidebarExpanded = false;
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
-
+    string year = DateTime.Now.ToString("yyyy");
+}

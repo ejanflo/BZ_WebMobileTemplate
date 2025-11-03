@@ -96,16 +96,6 @@ main {
     top: 0.5rem;
 }
 
-.scontainer {
-    overflow-y: scroll;
-    -ms-overflow-style: none; /* Internet Explorer 10+ */
-    scrollbar-width: none; /* Firefox, Safari 18.2+, Chromium 121+ */
-}
-
-.scontainer::-webkit-scrollbar {
-    display: none; /* Older Safari and Chromium */
-}
-
 .mobile-sidebar {
     display: flex;
     flex-direction: column;
