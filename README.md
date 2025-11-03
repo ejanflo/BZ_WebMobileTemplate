@@ -1,4 +1,4 @@
-# BZ Web Mobile Template
+# BZ_WebMobileTemplate (ITPORTAL using Blazor)
 
 [![.NET](https://img.shields.io/badge/.NET-9.0-blue.svg)](https://dotnet.microsoft.com/download/dotnet/9.0)
 [![Blazor](https://img.shields.io/badge/Blazor-Server%20%26%20MAUI-blueviolet.svg)](https://blazor.net/)
